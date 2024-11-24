@@ -1,4 +1,25 @@
+import easyocr
 import cv2
+
+
+def analys():
+    reader = easyocr.Reader(['en'])
+
+    # Распознавание текста с изображения
+    results = reader.readtext('image.png')
+
+    # Открытие файла для записи (создается новый файл или перезаписывается существующий)
+    with open('recognized_text.txt', 'w') as file:
+        # Собираем текст в одну строку
+        recognized_text = ""
+        for result in results:
+            # result[1] содержит распознанный текст, добавляем его к строке
+            recognized_text += result[1] + " "  # Добавляем пробел между словами, если нужно
+
+        # Записываем результат в файл
+        file.write(recognized_text.strip())  # Убираем лишний пробел в конце строки
+
+    print("Распознанный текст сохранен в файл 'recognized_text.txt'")
 
 def scanner():
     # Задаём размер окна, похожий на вертикальный лист A4
@@ -50,3 +71,4 @@ def scanner():
 
 if __name__ == "__main__":
     scanner()
+    analys()

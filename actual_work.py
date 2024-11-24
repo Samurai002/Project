@@ -1,25 +1,49 @@
-import easyocr
 import cv2
-
+from PIL import Image
+import pytesseract
+import os
 
 def analys():
-    reader = easyocr.Reader(['en'])
+    pytesseract.pytesseract.tesseract_cmd = r'Tesseract\tesseract.exe'  # Укажите правильный путь
+    image_path = 'image.png'
 
-    # Распознавание текста с изображения
-    results = reader.readtext('image.png')
+    # Загрузить изображение и проверить его
+    image = cv2.imread(image_path)
+    if image is None:
+        print("Ошибка: изображение не найдено!")
+        exit(1)
 
-    # Открытие файла для записи (создается новый файл или перезаписывается существующий)
-    with open('recognized_text.txt', 'w') as file:
-        # Собираем текст в одну строку
-        recognized_text = ""
-        for result in results:
-            # result[1] содержит распознанный текст, добавляем его к строке
-            recognized_text += result[1] + " "  # Добавляем пробел между словами, если нужно
+    preprocess = "thresh"
 
-        # Записываем результат в файл
-        file.write(recognized_text.strip())  # Убираем лишний пробел в конце строки
+    # Преобразовать в оттенки серого
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    print("Распознанный текст сохранен в файл 'recognized_text.txt'")
+    # Применить пороговое значение для предварительной обработки изображения
+    if preprocess == "thresh":
+        gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    elif preprocess == "blur":
+        gray = cv2.medianBlur(gray, 3)
+
+    #Сохранить временный файл для OCR
+    filename = "{}.png".format(os.getpid())
+    cv2.imwrite(filename, gray)
+    print(f"Сохранен временный файл: {filename}")
+
+    # Применить OCR с ограничением только на цифры
+    try:
+        config = "--psm 6 -c tessedit_char_whitelist=0123456789.,-"  # Режим страницы 6: распознавание блока текста
+        text = pytesseract.image_to_string(Image.open(filename), config=config)
+        print(f"{text}")
+        
+        # Записать результат в файл result.txt
+        with open("result.txt", "w") as file:
+            file.write(text)
+            print("Распознанный текст сохранен в файл result.txt")
+    except Exception as e:
+        print(f"Ошибка при применении OCR: {e}")
+
+    # Удалить временный файл
+    os.remove(filename)
 
 def scanner():
     # Задаём размер окна, похожий на вертикальный лист A4

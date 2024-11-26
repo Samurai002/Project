@@ -1,0 +1,63 @@
+def analys_DONT_TOUCH(correct_answers, image_path='obrez.png', result_image_path='result.png'):
+    pytesseract.pytesseract.tesseract_cmd = r'Tesseract\tesseract.exe'  # Укажите правильный путь
+
+    # Открываем исходное изображение через OpenCV
+    image_cv = cv2.imread(image_path)
+
+    if image_cv is None:
+        print("Ошибка: изображение для анализа не найдено!")
+        return
+
+    # Преобразуем в оттенки серого
+    gray = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite('gray_image.png', gray)  # Сохраним для отладки
+
+    # Попробуем использовать обычную бинаризацию без инверсии
+    thresh = cv2.threshold(gray, 170, 255, cv2.THRESH_BINARY)[1]
+    cv2.imwrite('thresh_image.png', thresh)  # Сохраним для отладки
+
+    # Сохраняем промежуточное изображение, чтобы видеть результаты OpenCV
+    intermediate_path = "intermediate_image.png"
+    cv2.imwrite(intermediate_path, thresh)
+
+    # Применить OCR
+    try:
+        config = "--psm 6 -c tessedit_char_whitelist=0123456789"  # Режим страницы 6: распознавание блока текста
+        data = pytesseract.image_to_data(thresh, config=config, output_type=pytesseract.Output.DICT)
+
+        # Проверка распознанного текста
+        print(f"Распознанный текст: {data['text']}")
+
+        # Открыть изображение с помощью Pillow для разметки
+        image = Image.open(image_path)
+        draw = ImageDraw.Draw(image)
+
+        # Проходим по данным OCR и отмечаем ответы
+        answers = []
+        for i, word in enumerate(data['text']):
+            word = word.strip().strip(".")  # Убираем любые точки и лишние пробелы
+            if word.isdigit() and word != "":
+                answers.append(word)
+                x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
+
+                # Определяем, правильный или неправильный ответ
+                idx = len(answers) - 1  # Индекс ответа
+                if idx < len(correct_answers):
+                    if word == correct_answers[idx]:
+                        draw.rectangle([(x, y), (x + w, y + h)], outline="green", width=3)
+                    else:
+                        draw.rectangle([(x, y), (x + w, y + h)], outline="red", width=3)
+
+        # Проверка списка распознанных ответов
+        if not answers:
+            print("Ответы не были распознаны. Проверьте качество изображения и настройки OCR.")
+            return
+
+        print(f"Распознанные ответы: {answers}")
+
+        # Сохраняем результат с разметкой
+        image.save(result_image_path)
+        print(f"Изображение с пометками сохранено как {result_image_path}")
+
+    except Exception as e:
+        print(f"Ошибка при применении OCR: {e}")

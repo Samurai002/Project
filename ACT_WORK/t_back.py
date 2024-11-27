@@ -113,7 +113,7 @@ def image_cutter():
         print("Вырезанное изображение сохранено как obrez.png")
 
         # Отображаем вырезанный прямоугольник для проверки
-        cv2.imshow("Вырезанный прямоугольник", rect_img)
+        #cv2.imshow("Вырезанный прямоугольник", rect_img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
@@ -121,26 +121,7 @@ def image_cutter():
         print("Прямоугольник не найден.")
 
 
-def crop_image(image_path, output_path, cm_to_crop=1.5):
-    # Загрузить изображение
-    image = cv2.imread(image_path)
-    if image is None:
-        print("Ошибка: изображение не найдено!")
-        return False
-
-    # Получаем размеры изображения
-    height, width, _ = image.shape
-
-    # Рассчитаем смещение в пикселях на основе 2 см. 1 см ≈ 37.8 пикселей (при 96 DPI)
-    cm_to_pixels = 37.8
-    offset = int(cm_to_crop * cm_to_pixels)  # Преобразуем сантиметры в пиксели
-
-    # Обрезаем изображение, оставляя только правую часть (где находятся ответы)
-    cropped_image = image[0:height, offset:width]
-
-    # Сохраняем обрезанное изображение
-    cv2.imwrite(output_path, cropped_image)
-    print(f"Обрезанное изображение сохранено как {output_path}")
+def crop_image(cm_to_crop=1.3):
     # Загрузить изображение
     image = cv2.imread("obrez.png")
     if image is None:
@@ -158,16 +139,16 @@ def crop_image(image_path, output_path, cm_to_crop=1.5):
     cropped_image = image[0:height, offset:width]
 
     # Сохраняем обрезанное изображение
-    cv2.imwrite("output.png", cropped_image)
-    print(f"Обрезанное изображение сохранено как output.png")
-    return True
+    cv2.imwrite("obrez_cropped.png", cropped_image)
+    print(f"Обрезанное изображение сохранено как obrez_cropped.png")
 
 
-def analys(correct_answers, image_path, result_image_path='result.png'):
+
+def analys(correct_answers, result_image_path='result.png'):
     pytesseract.pytesseract.tesseract_cmd = r'Tesseract\tesseract.exe'  # Укажите правильный путь
 
     # Открываем исходное изображение через OpenCV
-    image_cv = cv2.imread(image_path)
+    image_cv = cv2.imread("obrez_cropped.png")
 
     if image_cv is None:
         print("Ошибка: изображение для анализа не найдено!")
@@ -202,7 +183,7 @@ def analys(correct_answers, image_path, result_image_path='result.png'):
         print(f"Распознанный текст: {data['text']}")
 
         # Открыть изображение с помощью Pillow для разметки
-        image = Image.open(image_path)
+        image = Image.open("obrez_cropped.png")
         draw = ImageDraw.Draw(image)
 
         # Проходим по данным OCR и отмечаем ответы

@@ -287,6 +287,9 @@ class CheckScreen(Screen):
             allow_stretch=True 
         )
             self.main_layout.add_widget(result)
+            os.remove("obrez_cropped.png")
+            os.remove("obrez.png")
+            os.remove("final_thresh_image.png")
 
 class MyApp(App):
     def build(self):

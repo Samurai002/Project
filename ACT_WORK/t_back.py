@@ -218,8 +218,8 @@ def analys(correct_answers, result_image_path='result.png'):
 
 
 if __name__ == "__main__":
-    correct_answers = ['44', '51', '69', '77', '99', '105', '794']
+    correct_answers = ['44', '55', '17', '17', '98']
     #scanner()
     image_cutter()
-    crop_image('obrez.png', 'obrez_cropped.png', cm_to_crop=1.3)
-    analys(correct_answers, image_path='obrez_cropped.png')
+    crop_image(cm_to_crop=1.3)
+    analys(correct_answers)

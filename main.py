@@ -72,11 +72,9 @@ class GenerationScreen(Screen):
 
         self.file_content = ""
 
-        # Основной лейаут
         main_layout = BoxLayout(orientation='vertical', spacing=10, padding=10)
         self.add_widget(main_layout)
 
-        # Верхний ряд кнопок
         top_buttons_layout = BoxLayout(orientation='horizontal', size_hint=(1, None), height=50, spacing=10)
 
         back_button = Button(
@@ -97,7 +95,6 @@ class GenerationScreen(Screen):
 
         main_layout.add_widget(top_buttons_layout)
 
-        # Прокручиваемый текст
         self.scroll_view = ScrollView(size_hint=(1, 0.6))
         with self.scroll_view.canvas.before:
             Color(1, 1, 1, 1)
@@ -116,7 +113,6 @@ class GenerationScreen(Screen):
         self.scroll_view.add_widget(self.text_label)
         main_layout.add_widget(self.scroll_view)
 
-        # Поле ввода
         input_button_layout = BoxLayout(
             orientation='horizontal',
             size_hint=(1, None),
@@ -135,7 +131,6 @@ class GenerationScreen(Screen):
         input_button_layout.add_widget(self.text_input)
         main_layout.add_widget(input_button_layout)
 
-        # Кнопки внизу
         create_variants_button = Button(
             text="Создать варианты",
             size_hint=(1, None),

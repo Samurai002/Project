@@ -25,7 +25,8 @@ from print import print_pdf
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import t_back
-
+import webbrowser
+import os
 
 pdfmetrics.registerFont(TTFont('Times-New_Roman', 'times-new-roman-cyr.ttf'))
 
@@ -65,17 +66,18 @@ class MainScreen(Screen):
     def open_check_screen(self, instance):
         self.manager.current = "check"
 
-
 class GenerationScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.file_content = ""  # Для хранения текста 
+        self.file_content = ""
 
+        # Основной лейаут
         main_layout = BoxLayout(orientation='vertical', spacing=10, padding=10)
         self.add_widget(main_layout)
 
-        top_buttons_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.1), spacing=10)
+        # Верхний ряд кнопок
+        top_buttons_layout = BoxLayout(orientation='horizontal', size_hint=(1, None), height=50, spacing=10)
 
         back_button = Button(
             text="Назад",
@@ -95,7 +97,8 @@ class GenerationScreen(Screen):
 
         main_layout.add_widget(top_buttons_layout)
 
-        self.scroll_view = ScrollView(size_hint=(1, 0.15))
+        # Прокручиваемый текст
+        self.scroll_view = ScrollView(size_hint=(1, 0.6))
         with self.scroll_view.canvas.before:
             Color(1, 1, 1, 1)
             self.rect = Rectangle(size=self.scroll_view.size, pos=self.scroll_view.pos)
@@ -104,7 +107,7 @@ class GenerationScreen(Screen):
         self.text_label = Label(
             text="Здесь будет отображаться текст из файла",
             size_hint_y=None,
-            height=100,
+            height=200,
             valign='top',
             halign='left',
             color=(0, 0, 0, 1)
@@ -113,6 +116,7 @@ class GenerationScreen(Screen):
         self.scroll_view.add_widget(self.text_label)
         main_layout.add_widget(self.scroll_view)
 
+        # Поле ввода
         input_button_layout = BoxLayout(
             orientation='horizontal',
             size_hint=(1, None),
@@ -120,17 +124,18 @@ class GenerationScreen(Screen):
         )
 
         self.text_input = TextInput(
-            hint_text="Введите количество вариантов",
+            hint_text="Введите кол-во вариантов",
             input_filter="float",
             multiline=False,
-            size_hint=(0.7, 1)
+            size_hint=(None, None),
+            width=300,
+            height=50,
+            font_size=14
         )
         input_button_layout.add_widget(self.text_input)
         main_layout.add_widget(input_button_layout)
 
-        self.pdf_preview = Image(size_hint=(1, 0.4))
-        main_layout.add_widget(self.pdf_preview)
-
+        # Кнопки внизу
         create_variants_button = Button(
             text="Создать варианты",
             size_hint=(1, None),
@@ -140,15 +145,24 @@ class GenerationScreen(Screen):
         create_variants_button.bind(on_press=self.create_variants)
         main_layout.add_widget(create_variants_button)
 
-        self.print_pdf_button = Button(
-            text="Печать PDF",
+        self.open_pdf_button = Button(
+            text="Посмотреть сгенерированные варианты",
             size_hint=(1, None),
-            height=50
+            height=50,
+            disabled=True
+        )
+        self.open_pdf_button.bind(on_press=self.open_pdf_in_browser)
+        main_layout.add_widget(self.open_pdf_button)
+
+        self.print_pdf_button = Button(
+            text="Печать сгенерированных вариантов",
+            size_hint=(1, None),
+            height=50,
+            disabled=True
         )
         self.print_pdf_button.bind(on_press=self.print_pdf)
-        self.print_pdf_button.disabled = True
         main_layout.add_widget(self.print_pdf_button)
-        
+
     def go_back(self, instance):
         self.manager.current = "main"
 
@@ -161,7 +175,7 @@ class GenerationScreen(Screen):
         self.rect.pos = instance.pos
 
     def load_file(self, instance):
-        Tk().withdraw() 
+        Tk().withdraw()
         file_path = askopenfilename(filetypes=[("Text Files", "*.txt")])
         if file_path:
             with open(file_path, 'r', encoding='utf-8') as file:
@@ -175,21 +189,17 @@ class GenerationScreen(Screen):
             print(f"Создание вариантов: {self.file_content}")
             genered_variants(self.file_content, self.text_input.text)
 
+        pdf_path = r"test.pdf"
+        if os.path.exists(pdf_path):
+            self.open_pdf_button.disabled = False  
+            self.print_pdf_button.disabled = False  
 
-        pages = convert_from_path(r"C:\Users\Gamer\PycharmProjects\Project\test.pdf", 200, poppler_path = "poppler/bin")
-        if pages:
-            # Преобразование первой страницы в формат, понятный Kivy
-            img_byte_arr = io.BytesIO()
-            pages[0].save(img_byte_arr, format='PNG')
-            img_byte_arr.seek(0)
-            core_image = CoreImage(img_byte_arr, ext='png')
-            self.pdf_preview.texture = core_image.texture
-
-            # Изменение размера изображения
-            self.pdf_preview.size_hint = (1.5, None)  # Увеличение ширины, растягивание по длине
-            self.pdf_preview.height = self.height     # Высота равна высоте всего окна
-            self.pdf_preview.allow_stretch = True     # Позволяет растягивать изображение
-            self.pdf_preview.keep_ratio = False       # Не сохраняет исходное соотношение сторон
+    def open_pdf_in_browser(self, instance):
+        pdf_path = r"test.pdf"
+        if os.path.exists(pdf_path):
+            webbrowser.open_new_tab(f"file://{os.path.abspath(pdf_path)}")
+        else:
+            print("Файл PDF не найден.")
 
     def print_pdf(self, instance):
         print_pdf("test.pdf")
